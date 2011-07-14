@@ -22,6 +22,10 @@ module Mongoid::Taggable
 
     delegate :convert_string_tags_to_array, :to => 'self.class'
 
+    set_callback :save, :before do
+      @__was_new_record = true if new_record?
+    end
+
     set_callback :save, :after, :if => proc { should_update_tag_aggregation? } do |document|
       document.class.aggregate_tags!
     end
@@ -154,8 +158,12 @@ module Mongoid::Taggable
     # Guard for callback that executes tag count aggregation, checking
     # the option is enabled and a document change modified tags.
     def should_update_tag_aggregation?
-      self.class.aggregate_tags? &&                   # vvv was a new record
-        previous_changes.include?(tags_field.to_s) || previous_changes.blank?
+      update = self.class.aggregate_tags? &&                   # vvv was a new record
+        previous_changes.include?(tags_field.to_s) || @__was_new_record
+
+      @__was_new_record = false
+
+      update
     end
   end
 

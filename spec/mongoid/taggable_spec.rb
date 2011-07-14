@@ -127,6 +127,11 @@ describe Mongoid::Taggable do
         MyModel.should_not_receive(:aggregate_tags!)
         models.first.update_attributes(:attr => "changed")
       end
+
+      it "should not update if nothing is changed" do
+        MyModel.should_not_receive(:aggregate_tags!)
+        models.first.save
+      end
     end
   end
 
